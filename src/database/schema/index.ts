@@ -6,6 +6,9 @@ import {
   text,
   boolean,
   timestamp,
+  uuid,
+  jsonb,
+  unique,
 } from 'drizzle-orm/pg-core';
 
 // ==================== BetterAuth 核心表 ====================
@@ -71,3 +74,37 @@ export const verification = pgTable('verification', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
+
+// ==================== 业务表 ====================
+
+/**
+ * 内容表 — 帖子
+ */
+export const post = pgTable('post', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  content: text('content').notNull(),
+  mediaUrls: jsonb('media_urls').$type<string[]>(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+/**
+ * 点赞表 — post_like
+ */
+export const postLike = pgTable(
+  'post_like',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    postId: uuid('post_id')
+      .notNull()
+      .references(() => post.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => [unique().on(t.userId, t.postId)],
+);

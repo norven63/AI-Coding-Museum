@@ -7,6 +7,8 @@
 
 **CORS 配置**：服务端已启用 CORS，允许前端地址由环境变量 `CORS_ORIGIN` 控制（默认 `http://localhost:5173`），并开启 `credentials: true` 以支持跨域携带 Cookie。
 
+**错误响应规范（业务接口）**：`/api/posts`、`/api/users` 等业务接口统一使用 `{ code, message }` 格式，详见《技术框架设计》→ API 错误响应规范。认证接口 `/api/auth/*` 由 BetterAuth 提供，格式一致。
+
 ---
 
 ## 一、健康检查
@@ -57,7 +59,7 @@ BetterAuth 路由（`/api/auth/*`）的错误响应统一使用以下结构：
 }
 ```
 
-> 注意：这与 NestJS 默认的错误格式 `{ statusCode, message, error }` 不同。前端可通过响应体结构区分错误来源。
+> 注意：业务接口（/api/posts、/api/users 等）通过全局 ExceptionFilter 输出相同格式，前端可统一解析。
 
 **已知错误码清单**：
 
@@ -288,6 +290,209 @@ set-cookie: better-auth.dont_remember=; Max-Age=0; Path=/; HttpOnly; SameSite=La
 **curl 示例**：
 ```bash
 curl -X POST http://localhost:3000/api/auth/sign-out -b tmp/cookies.txt
+```
+
+---
+
+## 三、内容与用户（业务接口）
+
+> 以下接口需登录，携带 Cookie：`-b tmp/cookies.txt`。错误格式统一为 `{ code, message }`。
+
+### POST /api/posts
+
+发帖（纯文本）。
+
+**请求头**：
+```
+Content-Type: application/json
+Cookie: better-auth.session_token=<登录后 Set-Cookie 中的完整值>
+```
+
+**请求体**：
+```json
+{
+  "content": "hello"
+}
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| content | string | ✅ | 正文，不能为空 |
+
+**成功返回**（HTTP 201）：
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "userId": "gpSBZwZ6TukPWxGh4X3WRJPACAKaXF91",
+  "content": "hello",
+  "mediaUrls": null,
+  "createdAt": "2026-02-23T12:00:00.000Z",
+  "updatedAt": "2026-02-23T12:00:00.000Z"
+}
+```
+
+**失败场景**：
+
+| HTTP 状态码 | code | 触发条件 |
+|------------|------|----------|
+| 401 | `UNAUTHORIZED` | 未登录或会话过期 |
+| 400 | `BAD_REQUEST` | content 为空或缺失 |
+
+**curl 示例**：
+```bash
+curl -X POST http://localhost:3000/api/posts \
+  -H "Content-Type: application/json" \
+  -b tmp/cookies.txt \
+  -d '{"content":"hello"}'
+```
+
+---
+
+### GET /api/posts
+
+时间流分页。
+
+**请求头**：
+```
+Cookie: better-auth.session_token=<登录后 Set-Cookie 中的完整值>
+```
+
+**Query 参数**：
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| cursor | string | 否 | 上一页最后一条的 post.id，用于游标分页 |
+| limit | number | 否 | 每页条数，默认 10，最大 50 |
+
+**成功返回**（HTTP 200）：
+```json
+[
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "userId": "gpSBZwZ6TukPWxGh4X3WRJPACAKaXF91",
+    "content": "hello",
+    "mediaUrls": null,
+    "createdAt": "2026-02-23T12:00:00.000Z",
+    "updatedAt": "2026-02-23T12:00:00.000Z",
+    "authorName": "测试用户",
+    "authorImage": null
+  }
+]
+```
+
+**失败场景**：
+
+| HTTP 状态码 | code | 触发条件 |
+|------------|------|----------|
+| 401 | `UNAUTHORIZED` | 未登录或会话过期 |
+
+**curl 示例**：
+```bash
+curl "http://localhost:3000/api/posts?limit=10" -b tmp/cookies.txt
+```
+
+---
+
+### POST /api/posts/:id/like
+
+点赞/取消点赞（toggle）。
+
+**请求头**：
+```
+Cookie: better-auth.session_token=<登录后 Set-Cookie 中的完整值>
+```
+
+**路径参数**：`id` — post 的 UUID
+
+**成功返回**（HTTP 200）：
+```json
+{"liked": true}
+```
+或
+```json
+{"liked": false}
+```
+
+**失败场景**：
+
+| HTTP 状态码 | code | 触发条件 |
+|------------|------|----------|
+| 401 | `UNAUTHORIZED` | 未登录或会话过期 |
+| 404 | `NOT_FOUND` | post 不存在 |
+
+**curl 示例**：
+```bash
+curl -X POST http://localhost:3000/api/posts/550e8400-e29b-41d4-a716-446655440000/like -b tmp/cookies.txt
+```
+
+---
+
+### GET /api/users/me
+
+当前登录用户信息。
+
+**请求头**：
+```
+Cookie: better-auth.session_token=<登录后 Set-Cookie 中的完整值>
+```
+
+**成功返回**（HTTP 200）：
+```json
+{
+  "id": "gpSBZwZ6TukPWxGh4X3WRJPACAKaXF91",
+  "name": "测试用户",
+  "email": "test@example.com",
+  "emailVerified": false,
+  "image": null,
+  "createdAt": "2026-02-18T13:57:49.260Z",
+  "updatedAt": "2026-02-18T13:57:49.260Z"
+}
+```
+
+**失败场景**：
+
+| HTTP 状态码 | code | 触发条件 |
+|------------|------|----------|
+| 401 | `UNAUTHORIZED` | 未登录或会话过期 |
+
+**curl 示例**：
+```bash
+curl http://localhost:3000/api/users/me -b tmp/cookies.txt
+```
+
+---
+
+### GET /api/users/:id
+
+他人用户信息（脱敏，不返回 email）。
+
+**请求头**：
+```
+Cookie: better-auth.session_token=<登录后 Set-Cookie 中的完整值>
+```
+
+**路径参数**：`id` — 用户 ID
+
+**成功返回**（HTTP 200）：
+```json
+{
+  "id": "gpSBZwZ6TukPWxGh4X3WRJPACAKaXF91",
+  "name": "测试用户",
+  "image": null,
+  "createdAt": "2026-02-18T13:57:49.260Z"
+}
+```
+
+**失败场景**：
+
+| HTTP 状态码 | code | 触发条件 |
+|------------|------|----------|
+| 401 | `UNAUTHORIZED` | 未登录或会话过期 |
+| 404 | `NOT_FOUND` | 用户不存在 |
+
+**curl 示例**：
+```bash
+curl http://localhost:3000/api/users/gpSBZwZ6TukPWxGh4X3WRJPACAKaXF91 -b tmp/cookies.txt
 ```
 
 ---

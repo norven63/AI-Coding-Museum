@@ -9,6 +9,7 @@ import { Request } from 'express';
 import { AuthGuard } from '../auth/auth.guard';
 import { UsersService } from './users.service';
 
+/** 用户信息接口，均需登录。 */
 @Controller('api/users')
 @UseGuards(AuthGuard)
 export class UsersController {

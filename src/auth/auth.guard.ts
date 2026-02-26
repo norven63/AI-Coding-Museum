@@ -7,6 +7,10 @@ import {
 import { Request } from 'express';
 import { AuthService } from './auth.service';
 
+/**
+ * 会话鉴权守卫，校验请求是否携带有效 Cookie 会话。
+ * 未登录或会话过期时抛出 UNAUTHORIZED，供需登录接口复用。
+ */
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(private readonly authService: AuthService) {}

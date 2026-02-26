@@ -18,6 +18,10 @@ const STATUS_TO_CODE: Record<number, string> = {
   500: 'INTERNAL_SERVER_ERROR',
 };
 
+/**
+ * 全局异常过滤器，将 NestJS 抛出的异常统一转换为 { code, message } 格式，
+ * 便于前端统一解析错误码与展示。
+ */
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(HttpExceptionFilter.name);

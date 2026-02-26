@@ -4,6 +4,10 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { DRIZZLE } from '../database/database.provider';
 import * as schema from '../database/schema';
 
+/**
+ * BetterAuth 封装，提供邮箱密码注册/登录/会话管理。
+ * 依赖 AUTH_SECRET、BETTER_AUTH_URL 环境变量。
+ */
 @Injectable()
 export class AuthService {
   public readonly auth;

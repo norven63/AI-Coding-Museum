@@ -16,6 +16,7 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { PostsService } from './posts.service';
 import { BadRequestException } from '@nestjs/common';
 
+/** 帖子与点赞接口，均需登录。 */
 @Controller('api/posts')
 @UseGuards(AuthGuard)
 export class PostsController {

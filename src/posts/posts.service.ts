@@ -3,10 +3,14 @@ import { eq, and, desc, sql, lt } from 'drizzle-orm';
 import { DRIZZLE } from '../database/database.provider';
 import { post, postLike, user } from '../database/schema';
 
+/**
+ * 帖子与点赞业务服务。
+ */
 @Injectable()
 export class PostsService {
   constructor(@Inject(DRIZZLE) private readonly db: any) {}
 
+  /** 发帖，返回新建的 post。 */
   async create(userId: string, content: string) {
     const [created] = await this.db
       .insert(post)
@@ -15,6 +19,7 @@ export class PostsService {
     return created;
   }
 
+  /** 时间流分页，按创建时间倒序。cursor 为上一页最后一条 id，limit 限制 1–50。 */
   async findAll(_userId: string, cursor?: string, limit = 10) {
     const take = Math.min(Math.max(1, limit), 50);
 
@@ -61,6 +66,7 @@ export class PostsService {
     return rows;
   }
 
+  /** 点赞/取消点赞（toggle），post 不存在时抛出 NotFoundException。 */
   async toggleLike(userId: string, postId: string) {
     const [target] = await this.db
       .select()

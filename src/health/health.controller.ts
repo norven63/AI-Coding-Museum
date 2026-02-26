@@ -2,6 +2,7 @@ import { Controller, Get, Inject } from '@nestjs/common';
 import { DRIZZLE } from '../database/database.provider';
 import { sql } from 'drizzle-orm';
 
+/** 健康检查，用于部署探活与数据库连接状态。 */
 @Controller('health')
 export class HealthController {
   constructor(@Inject(DRIZZLE) private readonly db: any) {}

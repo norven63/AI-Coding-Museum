@@ -11,10 +11,10 @@ export class PostsService {
   constructor(@Inject(DRIZZLE) private readonly db: any) {}
 
   /** 发帖，返回新建的 post。 */
-  async create(userId: string, content: string) {
+  async create(userId: string, content: string, mediaUrls?: string[]) {
     const [created] = await this.db
       .insert(post)
-      .values({ userId, content })
+      .values({ userId, content, mediaUrls: mediaUrls || null })
       .returning();
     return created;
   }

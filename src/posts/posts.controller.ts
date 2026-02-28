@@ -35,6 +35,7 @@ export class PostsController {
     const created = await this.postsService.create(
       req.session.user.id,
       content.trim(),
+      dto.mediaUrls,
     );
     return created;
   }

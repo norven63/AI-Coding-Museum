@@ -1,6 +1,6 @@
 {
   "name": "ai-coding-museum",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "AI Coding Museum 后台服务",
   "scripts": {
     "build": "nest build",

@@ -9,6 +9,7 @@ import {
   uuid,
   jsonb,
   unique,
+  integer,
 } from 'drizzle-orm/pg-core';
 
 // ==================== BetterAuth 核心表 ====================
@@ -107,4 +108,62 @@ export const postLike = pgTable(
     createdAt: timestamp('created_at').notNull().defaultNow(),
   },
   (t) => [unique().on(t.userId, t.postId)],
+);
+
+/**
+ * 评论表 — 支持楼中楼（最多5层嵌套）
+ */
+export const comment = pgTable('comment', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  postId: uuid('post_id')
+    .notNull()
+    .references(() => post.id, { onDelete: 'cascade' }),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  content: text('content').notNull(),
+  parentId: uuid('parent_id').references((): any => comment.id, {
+    onDelete: 'cascade',
+  }),
+  depth: integer('depth').notNull().default(0),
+  likeCount: integer('like_count').notNull().default(0),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  deletedAt: timestamp('deleted_at'),
+});
+
+/**
+ * 评论点赞表 — comment_like
+ */
+export const commentLike = pgTable(
+  'comment_like',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    commentId: uuid('comment_id')
+      .notNull()
+      .references(() => comment.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => [unique().on(t.userId, t.commentId)],
+);
+
+/**
+ * 关注表 — 用户关注关系（单向）
+ */
+export const follow = pgTable(
+  'follow',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    followerId: text('follower_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    followingId: text('following_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => [unique().on(t.followerId, t.followingId)],
 );

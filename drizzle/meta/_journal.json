@@ -15,6 +15,20 @@
       "when": 1771954758714,
       "tag": "0001_wild_mojo",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1772351984745,
+      "tag": "0002_cynical_night_thrasher",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1772356000438,
+      "tag": "0003_stiff_sharon_carter",
+      "breakpoints": true
     }
   ]
 }

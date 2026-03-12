@@ -18,6 +18,7 @@ secrets/
 # IDE
 .idea/
 .vscode/
+.cursor/
 *.swp
 *.swo
 
@@ -31,3 +32,5 @@ logs/
 
 # 临时文件（验证、调试产出）
 tmp/
+
+# sealos
